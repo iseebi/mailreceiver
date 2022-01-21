@@ -1,0 +1,21 @@
+events {
+    worker_connections  16;
+}
+http {
+    server {
+        listen 443 ssl;
+        ssl_certificate     /etc/letsencrypt/certificates/%%YOUR_HOST_NAME%%;
+        ssl_certificate_key /etc/letsencrypt/certificates/%%YOUR_HOST_NAME%%;
+        server_name %%YOUR_HOST_NAME%%;
+        location / {
+            auth_basic "Restricted";
+            auth_basic_user_file /etc/nginx/htpasswd;
+        }
+        location /delivery {
+            auth_basic "Restricted";
+            auth_basic_user_file /etc/nginx/htpasswd;
+            proxy_pass http://lmtpdeliver:8080/delivery;
+            proxy_redirect off;
+        }
+    }
+}

@@ -1,0 +1,71 @@
+version: '3.5'
+
+services:
+  s3ql:
+    image: registry.gitlab.com/salokyn/docker-s3ql
+    volumes:
+      - type: bind
+        source: ./etc/s3ql
+        target: /etc/s3ql
+      - type: bind
+        source: ./s3ql
+        target: /s3ql
+        bind:
+          propagation: shared
+    environment:
+      #S3QL_USERNAME: "${MUAUSER_KEY}"
+      #S3QL_PASSWORD: "${MUAUSER_SECRET}"
+      #S3QL_URL: "${MAILBOX_URL}"
+      #S3_PASSPHRASE: "${MAILBOX_PASSPHASE}"
+      S3QL_AUTHFILE: /etc/s3ql/authfile
+      S3QL_MOUNT_OPTIONS: --allow-other
+    security_opt:
+      - apparmor:unconfined 
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse
+    stop_grace_period: 10m
+  
+  dovecot:
+    image: dovecot/dovecot
+    depends_on:
+      - s3ql
+    ports:
+      - "110:110"
+      - "995:995"
+      - "143:143"
+      - "993:993"
+      - "587:587"
+      - "24:24"
+    volumes:
+      - type: bind
+        source: /etc/letsencrypt
+        target: /etc/letsencrypt
+      - type: bind
+        source: ./etc/dovecot
+        target: /etc/dovecot
+      - type: bind
+        source: ./s3ql
+        target: /srv
+        bind:
+          propagation: slave
+
+  lmtpdeliver:
+    build: ./lmtpdeliver
+    environment:
+      LMTP_SERVER: "dovecot:24"
+    ports:
+      - "8080:8080"
+
+  proxy:
+    image: nginx
+    volumes:
+      - type: bind
+        source: ./etc/nginx
+        target: /etc/nginx
+      - type: bind
+        source: /etc/letsencrypt
+        target: /etc/letsencrypt
+    ports:
+      - "5980:443"

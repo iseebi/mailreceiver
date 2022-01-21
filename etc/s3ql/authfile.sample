@@ -1,0 +1,5 @@
+[s3ql]
+backend-login: %%AWS_ACCESS_KEY_ID%%
+backend-password: %%AWS_SECRET_ACCESS_KEY%%
+storage-url: s3://%%AWS_S3_REGION%%/%%AWS_BUCKET_NAME%%
+fs-passphrase: %%S3QL_CRYPT_PATHPHASE%%
